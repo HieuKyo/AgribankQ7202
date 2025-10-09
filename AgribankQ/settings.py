@@ -52,7 +52,7 @@ if APP_ENV == 'online':
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     
     DATABASES = {'default': dj_database_url.config(conn_max_age=600, ssl_require=True)}
-    STORAGES = {"staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"}}
+    STORAGES = {"staticfiles": {"BACKEND": "whitenoise.storage.StaticFilesStorage"}}
 else:
     # Cài đặt cho Mạng nội bộ (Offline)
     DEBUG = True # Giữ True cho offline để dễ gỡ lỗi
