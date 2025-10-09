@@ -1,0 +1,46 @@
+/* static/css/custom.css */
+:root {
+    --agribank-red: #95212A;
+    --agribank-green: #005A3A;
+    --light-gray-bg: #f8f9fa;
+}
+
+body {
+    background-color: var(--light-gray-bg);
+}
+
+.header-agribank {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--agribank-green);
+}
+.header-agribank .right-header { text-align: center; }
+
+/* Thêm viền đỏ cho các card, tạo điểm nhấn */
+.card {
+    border-top: 4px solid var(--agribank-red);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+/* Tùy chỉnh các nút bấm theo màu đỏ chủ đạo */
+.btn-primary {
+    background-color: var(--agribank-red);
+    border-color: var(--agribank-red);
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+    background-color: #7c1c23; /* Màu đỏ sậm hơn khi hover */
+    border-color: #7c1c23;
+}
+
+/* Hiệu ứng hover cho các mục trong danh sách */
+.quiz-list-item:hover {
+    background-color: #fff8f8;
+    border-left: 4px solid var(--agribank-red);
+    transform: translateX(5px);
+    transition: all 0.2s ease-in-out;
+}

@@ -1,0 +1,27 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+{% block content %}
+<div class="main-content">
+    <div class="text-center mb-4">
+        <h2 style="color: var(--agribank-green);">{{ exam.title }}</h2>
+        <p class="lead">Vui lòng chọn một chủ đề để bắt đầu</p>
+    </div>
+
+    <div class="list-group">
+        {% for quiz in quizzes %}
+            <a href="{% url 'quiz_detail' quiz_id=quiz.id %}" class="list-group-item list-group-item-action quiz-list-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">{{ quiz.title }}</h5>
+                </div>
+                <p class="mb-1">{{ quiz.description|default:"Không có mô tả." }}</p>
+            </a>
+        {% empty %}
+            <p class="text-center">Kỳ thi này chưa có chủ đề nào.</p>
+        {% endfor %}
+    </div>
+
+    <div class="text-center mt-4">
+         <a href="{% url 'main_home' %}" class="btn btn-secondary">Quay lại</a>
+    </div>
+</div>
+{% endblock %}

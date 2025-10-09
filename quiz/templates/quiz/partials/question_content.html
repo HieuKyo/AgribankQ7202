@@ -1,0 +1,126 @@
+{% comment %} File: quiz/templates/quiz/partials/question_content.html {% endcomment %}
+
+<div class="card">
+    <div class="card-header">
+        <h1>{{ quiz.title|default:quiz_title }}</h1>
+        <p class="text-muted mb-2">Câu hỏi {{ question_index|add:1 }} / {{ total_questions }}</p>
+    </div>
+
+    <div class="card-body">
+        <h5 class="card-title mb-4">{{ question.text }}</h5>
+
+        <form id="quiz-form">
+            {% csrf_token %}
+            <div class="ms-3">
+                {% for choice in question.choices.all %}
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" 
+                           name="choice" id="choice_{{ choice.id }}" value="{{ choice.id }}">
+                    <label class="form-check-label" for="choice_{{ choice.id }}">
+                        {{ choice.text }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <hr>
+            
+            <div class="text-center">
+                <button type="button" id="check-answer-btn" class="btn btn-primary">Kiểm tra Đáp án</button>
+                {% if not is_last_question %}
+                    <a href="{% if quiz %}{% url 'question_view' quiz_id=quiz.id question_index=next_index %}{% else %}{% url 'random_question_view' question_index=next_index %}{% endif %}" class="btn btn-success" id="skip-next-btn">Câu tiếp theo</a>
+                {% endif %}
+                <a href="{% if quiz %}{% url 'quiz_result' quiz_id=quiz.id %}{% else %}{% url 'random_quiz_result' %}{% endif %}" id="finish-quiz-btn" class="btn btn-danger">Kết thúc & Nộp bài</a>
+                <a href="#" id="next-after-check-btn" class="btn btn-success" style="display: none;">Câu tiếp theo</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="result-popup" class="mt-4" style="display: none;">
+    </div>
+
+
+<script>
+    const checkBtn = document.getElementById('check-answer-btn');
+    const skipNextBtn = document.getElementById('skip-next-btn');
+    const finishBtn = document.getElementById('finish-quiz-btn');
+    const nextAfterCheckBtn = document.getElementById('next-after-check-btn');
+    
+    const resultPopup = document.getElementById('result-popup');
+    const resultAlert = document.getElementById('result-alert');
+    const resultText = document.getElementById('result-text');
+    const explanationText = document.getElementById('explanation-text');
+    const correctAnswerWrapper = document.getElementById('correct-answer-wrapper');
+    const correctAnswerText = document.getElementById('correct-answer-text');
+
+    function submitAnswer(choiceId, callback) {
+        if (!choiceId) {
+            if (callback) callback(null);
+            return;
+        }
+        const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        fetch("{% url 'check_answer' %}", {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
+            body: `choice_id=${choiceId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (callback) callback(data);
+        });
+    }
+
+    checkBtn.addEventListener('click', function() {
+        const selectedChoice = document.querySelector('input[name="choice"]:checked');
+        if (!selectedChoice) {
+            alert('Vui lòng chọn một đáp án!');
+            return;
+        }
+        
+        submitAnswer(selectedChoice.value, function(data) {
+            resultPopup.style.display = 'block';
+            explanationText.innerText = data.explanation;
+
+            if (data.is_correct) {
+                resultAlert.classList.remove('alert-danger');
+                resultAlert.classList.add('alert-success');
+                resultText.innerText = 'Đúng!';
+                correctAnswerWrapper.style.display = 'none';
+            } else {
+                resultAlert.classList.remove('alert-success');
+                resultAlert.classList.add('alert-danger');
+                resultText.innerText = 'Sai!';
+                correctAnswerText.innerText = data.correct_answer_text;
+                correctAnswerWrapper.style.display = 'block'; 
+            }
+
+            document.querySelectorAll('.form-check-input').forEach(input => input.disabled = true);
+            checkBtn.style.display = 'none';
+            if (skipNextBtn) skipNextBtn.style.display = 'none';
+
+            if (nextAfterCheckBtn) {
+                if (skipNextBtn) {
+                    nextAfterCheckBtn.href = skipNextBtn.href;
+                } else {
+                    nextAfterCheckBtn.innerText = 'Hoàn thành';
+                    nextAfterCheckBtn.href = finishBtn.href;
+                }
+                nextAfterCheckBtn.style.display = 'inline-block';
+            }
+        });
+    });
+
+    if (skipNextBtn) {
+        skipNextBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            const nextUrl = this.href;
+            const selectedChoice = document.querySelector('input[name="choice"]:checked');
+            const choiceId = selectedChoice ? selectedChoice.value : null;
+
+            submitAnswer(choiceId, function() {
+                window.location.href = nextUrl;
+            });
+        });
+    }
+</script>

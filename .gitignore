@@ -1,0 +1,17 @@
+# Môi trường ảo
+venv/
+
+# Database
+db.sqlite3
+
+# File của Python
+__pycache__/
+*.pyc
+
+# File của PyInstaller
+/build/
+/dist/
+*.spec
+
+# File hệ điều hành
+.DS_Store

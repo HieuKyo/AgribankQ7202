@@ -1,0 +1,50 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Kết quả: {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="card text-center mb-5">
+    <div class="card-header"><h1>Kết quả: {{ quiz.title }}</h1></div>
+    <div class="card-body">
+        <h2 class="card-title">
+            Điểm số cuối cùng của bạn: 
+            <span class="text-success">{{ score }} / {{ total_questions }}</span>
+        </h2>
+        <a href="{% url 'main_home' %}" class="btn btn-primary mt-3">Quay về trang chủ</a>
+    </div>
+</div>
+
+{% if results %}
+<div class="mt-4">
+    <h3 class="text-center mb-4">Xem lại chi tiết bài làm</h3>
+    {% for result in results %}
+        <div class="card mb-3 {% if result.is_correct %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body">
+                <p><strong>{{ forloop.counter }}. {{ result.question.text }}</strong></p>
+                
+                <ul class="list-unstyled">
+                    {% for choice in result.question.choices.all %}
+                        <li>
+                            {% if choice == result.correct_choice %}
+                                <span class="text-success">✔ {{ choice.text }} (Đáp án đúng)</span>
+                            {% elif choice == result.selected_choice %}
+                                <span class="text-danger">✘ {{ choice.text }} (Bạn đã chọn)</span>
+                            {% else %}
+                                <span>{{ choice.text }}</span>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if result.question.explanation %}
+                <div class="alert alert-info mt-3">
+                    <strong>Diễn giải:</strong> {{ result.question.explanation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

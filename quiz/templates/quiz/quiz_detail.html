@@ -1,0 +1,16 @@
+{% extends 'quiz/base.html' %}
+{% block content %}
+<div class="card text-center">
+    <div class="card-header"><h1>{{ quiz.title }}</h1></div>
+    <div class="card-body">
+        <p class="lead">{{ quiz.description }}</p>
+        {% if first_question %}
+            <a href="{% url 'question_view' quiz_id=quiz.id question_order=first_question.order %}" class="btn btn-success btn-lg">
+                Bắt đầu làm bài
+            </a>
+        {% else %}
+            <p class="text-danger">Đề thi này chưa có câu hỏi nào.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

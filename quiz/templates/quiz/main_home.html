@@ -1,0 +1,15 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+{% block content %}
+<div class="main-content text-center">
+    <img src="{% static 'img/agribank_logo.png' %}" alt="Agribank Logo" style="max-width: 220px; margin-bottom: 20px;">
+    <h1 class="display-6" style="color: var(--agribank-green); font-weight: bold;">AGRIBANK CHI NHÁNH GIÁ RAI BẠC LIÊU</h1>
+    <hr class="my-4">
+    
+    {% for exam in exams %}
+        <a href="{% url 'quiz_list' exam_id=exam.id %}" class="btn btn-primary btn-lg mb-3 d-block">
+            {{ exam.title }}
+        </a>
+    {% endfor %}
+</div>
+{% endblock %}
