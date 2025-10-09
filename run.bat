@@ -23,7 +23,7 @@ call venv\Scripts\activate.bat
 
 echo "Cai dat cac thu vien can thiet tu thu muc 'packages' (khong can Internet)..."
 REM Su dung cac tham so --no-index va --find-links de cai dat offline
-pip install --no-index --find-links=packages -r requirements.txt
+pip install --no-index --find-links=packages -r requirements_base.txt
 
 echo "========================================================"
 echo "    SERVER DANG CHAY!"
