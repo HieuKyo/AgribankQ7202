@@ -2,7 +2,7 @@ from .base import *
 import dj_database_url
 
 # TẠM THỜI BẬT DEBUG ĐỂ XEM LỖI CHI TIẾT
-DEBUG = False
+DEBUG = True
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
