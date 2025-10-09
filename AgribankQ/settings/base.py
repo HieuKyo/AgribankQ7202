@@ -23,7 +23,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Cho phiên bản online
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -32,7 +32,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'AgribankQ.urls' # BIẾN BỊ THIẾU GÂY LỖI
+ROOT_URLCONF = 'AgribankQ.urls' # BIẾN BỊ THIẾU GÂY LỖI NẰM Ở ĐÂY
 
 TEMPLATES = [
     {
@@ -51,8 +51,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'AgribankQ.wsgi.application'
-
-# ... (Database, Password validators, etc. giữ nguyên) ...
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
