@@ -1,0 +1,43 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+
+{% block title %}{% if quiz %}{{ quiz.title }}{% else %}{{ quiz_title }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Xem lại Bài làm</h1>
+        <p class="lead">{% if quiz %}{{ quiz.title }}{% else %}{{ quiz_title }}{% endif %}</p>
+    </div>
+    <div class="card-body">
+        <p class="text-center">
+            <i class="bi bi-check-circle-fill review-mark-answered"></i> : Đã trả lời
+            <span class="mx-2">|</span>
+            <i class="bi bi-x-circle-fill review-mark-unanswered"></i> : Chưa trả lời
+        </p>
+        <hr>
+        <p class="text-center">Nhấn vào số thứ tự câu hỏi để quay lại.</p>
+
+        <div class="d-flex flex-wrap justify-content-center">
+            {% for item in review_list %}
+                <div class="p-2">
+                    <a href="{% if quiz %}{% url 'question_view' quiz_id=quiz.id question_index=item.index %}{% else %}{% url 'random_question_view' question_index=item.index %}{% endif %}" 
+                       class="btn {% if item.is_answered %}btn-success{% else %}btn-outline-secondary{% endif %} review-btn">
+
+                        {{ forloop.counter }}
+
+                        {% if item.is_answered %}
+                            <i class="bi bi-check-circle-fill review-mark review-mark-answered"></i>
+                        {% else %}
+                            <i class="bi bi-x-circle-fill review-mark review-mark-unanswered"></i>
+                        {% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-footer text-center">
+        <a href="{% if quiz %}{% url 'quiz_result' quiz_id=quiz.id %}{% else %}{% url 'random_quiz_result' %}{% endif %}" class="btn btn-danger">Kết thúc & Nộp bài</a>
+    </div>
+</div>
+{% endblock %}

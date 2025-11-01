@@ -44,3 +44,36 @@ body {
     transform: translateX(5px);
     transition: all 0.2s ease-in-out;
 }
+
+/* Style cho trang Review */
+.review-btn {
+    position: relative;
+    width: 55px; /* Tăng kích thước nút */
+    height: 55px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.review-mark {
+    position: absolute;
+    top: -1px; /* Điều chỉnh vị trí dấu tích */
+    right: -1px;
+    font-size: 1.2rem;
+    line-height: 1;
+    background-color: white;
+    border-radius: 50%;
+}
+
+/* Dấu X màu tím cho câu chưa trả lời */
+.review-mark-unanswered {
+    color: purple; 
+}
+
+/* Dấu Check màu xanh lá cho câu đã trả lời */
+.review-mark-answered {
+    color: #198754; 
+}

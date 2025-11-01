@@ -1,50 +1,88 @@
 {% extends 'quiz/base.html' %}
+{% load static %}
 
-{% block title %}Kết quả: {{ quiz.title }}{% endblock %}
+{% block title %}Kết quả: {% if quiz %}{{ quiz.title }}{% else %}{{ quiz_title }}{% endif %}{% endblock %}
 
 {% block content %}
-<div class="card text-center mb-5">
-    <div class="card-header"><h1>Kết quả: {{ quiz.title }}</h1></div>
+<style>
+    /* Thêm style để làm nổi bật đáp án */
+    .correct-answer {
+        color: #198754;
+        font-weight: bold;
+    }
+    .incorrect-answer {
+        color: #dc3545;
+        text-decoration: line-through;
+    }
+</style>
+
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Kết quả Bài làm</h1>
+        <p class="lead">{% if quiz %}{{ quiz.title }}{% else %}{{ quiz_title }}{% endif %}</p>
+    </div>
+    
     <div class="card-body">
-        <h2 class="card-title">
-            Điểm số cuối cùng của bạn: 
-            <span class="text-success">{{ score }} / {{ total_questions }}</span>
-        </h2>
-        <a href="{% url 'main_home' %}" class="btn btn-primary mt-3">Quay về trang chủ</a>
+        <div class="text-center">
+            <h2>Bảng điểm của bạn</h2>
+            <h1 class="display-1">{{ score }} / {{ total_questions }}</h1>
+            <p class="lead">Bạn đã trả lời đúng {{ score }} trên tổng số {{ total_questions }} câu hỏi.</p>
+        </div>
+        
+        <hr class="my-4">
+        
+        <h3>Xem lại chi tiết bài làm</h3>
+        
+        <div class="accordion" id="resultAccordion">
+            {% for result in detailed_results %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse-{{ forloop.counter }}">
+                        <strong>Câu {{ forloop.counter }}: {{ result.question.text|truncatechars:80 }}</strong>
+                        
+                        {% if result.is_correct %}
+                            <span class="ms-auto badge bg-success">Đúng</span>
+                        {% else %}
+                            <span class="ms-auto badge bg-danger">Sai</span>
+                        {% endif %}
+                    </button>
+                </h2>
+                <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ forloop.counter }}" data-bs-parent="#resultAccordion">
+                    <div class="card-body">
+                        <p><strong>Câu hỏi:</strong> {{ result.question.text }}</p>
+                        
+                        {% if result.user_choice %}
+                            <p><strong>Bạn đã chọn:</strong>
+                                {% if result.is_correct %}
+                                    <span class="correct-answer">{{ result.user_choice.text }}</span>
+                                {% else %}
+                                    <span class="incorrect-answer">{{ result.user_choice.text }}</span>
+                                {% endif %}
+                            </p>
+                        {% else %}
+                            <p class="text-danger"><strong>Bạn đã bỏ qua câu này.</strong></p>
+                        {% endif %}
+                        
+                        <p class="correct-answer">
+                            <i class="bi bi-check-circle-fill"></i> Đáp án đúng: {{ result.correct_choice.text }}
+                        </p>
+                        
+                        {% if result.question.explanation %}
+                            <hr>
+                            <p><strong>Diễn giải:</strong> {{ result.question.explanation }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+    
+    <div class="card-footer text-center">
+        <a href="{% url 'main_home' %}" class="btn btn-primary">Quay về Trang chủ</a>
+        {% if quiz %}
+            <a href="{% url 'quiz_detail' quiz_id=quiz.id %}" class="btn btn-outline-secondary">Làm lại bài này</a>
+        {% endif %}
     </div>
 </div>
-
-{% if results %}
-<div class="mt-4">
-    <h3 class="text-center mb-4">Xem lại chi tiết bài làm</h3>
-    {% for result in results %}
-        <div class="card mb-3 {% if result.is_correct %}border-success{% else %}border-danger{% endif %}">
-            <div class="card-body">
-                <p><strong>{{ forloop.counter }}. {{ result.question.text }}</strong></p>
-                
-                <ul class="list-unstyled">
-                    {% for choice in result.question.choices.all %}
-                        <li>
-                            {% if choice == result.correct_choice %}
-                                <span class="text-success">✔ {{ choice.text }} (Đáp án đúng)</span>
-                            {% elif choice == result.selected_choice %}
-                                <span class="text-danger">✘ {{ choice.text }} (Bạn đã chọn)</span>
-                            {% else %}
-                                <span>{{ choice.text }}</span>
-                            {% endif %}
-                        </li>
-                    {% endfor %}
-                </ul>
-
-                {% if result.question.explanation %}
-                <div class="alert alert-info mt-3">
-                    <strong>Diễn giải:</strong> {{ result.question.explanation }}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    {% endfor %}
-</div>
-{% endif %}
-
 {% endblock %}

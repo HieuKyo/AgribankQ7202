@@ -17,33 +17,52 @@
 
 <div class="card">
     <div class="card-header">
-        <h1>{{ quiz.title }}</h1>
-        <p class="text-muted mb-0">Câu hỏi {{ question_index|add:1 }} / {{ total_questions }}</p>
+        <h4>{{ quiz.title }} (Câu {{ question_index|add:1 }} / {{ total_questions }})</h4>
     </div>
 
     <div class="card-body">
-        <h5 class="card-title mb-4">{{ question.text }}</h5>
-
-        <form id="quiz-form">
+        <h5 class="card-title">{{ question.text }}</h5>
+        <hr>
+        <form id="quiz-form" method="post" action="{% url 'check_answer' %}">
             {% csrf_token %}
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+
             <div class="list-group">
                 {% for choice in question.choices.all %}
                 <label class="list-group-item list-group-item-action">
-                    <input class="form-check-input" type="radio" name="choice" id="choice_{{ choice.id }}" value="{{ choice.id }}">
+                    <input type="radio" name="choice" value="{{ choice.id }}" class="form-check-input me-2">
                     <span class="form-check-label">{{ choice.text }}</span>
                 </label>
                 {% endfor %}
             </div>
-            <hr>
-            <div class="text-center">
-                <button type="button" id="check-answer-btn" class="btn btn-primary">Kiểm tra Đáp án</button>
-                {% if not is_last_question %}
-                    <a href="{% url 'question_view' quiz_id=quiz.id question_index=next_index %}" id="skip-next-btn" class="btn btn-success">Câu tiếp theo</a>
-                {% endif %}
-                <a href="{% url 'quiz_result' quiz_id=quiz.id %}" id="finish-quiz-btn" class="btn btn-danger">Kết thúc & Nộp bài</a>
-                <a href="#" id="next-after-check-btn" class="btn btn-success" style="display: none;">Câu tiếp theo</a>
-            </div>
         </form>
+    </div>
+    
+    <div class="card-footer">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                {% if question_index > 0 %}
+                    <a href="{% url 'question_view' quiz_id=quiz.id question_index=previous_index %}" id="prev-question-link" class="btn btn-outline-secondary">‹ Câu trước</a>
+                {% else %}
+                    <a href="#" class="btn btn-outline-secondary disabled" aria-disabled="true">‹ Câu trước</a>
+                {% endif %}
+            </div>
+            
+            <div>
+                {% if not is_last_question %}
+                    <a href="{% url 'question_view' quiz_id=quiz.id question_index=next_index %}" id="next-question-link" class="btn btn-success">Câu tiếp theo ›</a>
+                {% else %}
+                    <a href="#" class="btn btn-success disabled" aria-disabled="true">Câu tiếp theo ›</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-center d-flex justify-content-center gap-2 flex-wrap">
+            <button type="button" id="check-answer-btn" class="btn btn-primary">Kiểm tra Đáp án</button>
+            <a href="{% url 'review_quiz' quiz_id=quiz.id %}" class="btn btn-info text-white">Xem lại bài làm</a>
+            <a href="{% url 'quiz_result' quiz_id=quiz.id %}" id="finish-quiz-btn" class="btn btn-danger">Kết thúc & Nộp bài</a>
+        </div>
     </div>
 </div>
 
@@ -59,11 +78,13 @@
     </div>
 </div>
 
+
 <script>
     const checkBtn = document.getElementById('check-answer-btn');
-    const skipNextBtn = document.getElementById('skip-next-btn');
+    const nextBtn = document.getElementById('next-question-link');
+    const prevBtn = document.getElementById('prev-question-link');
     const finishBtn = document.getElementById('finish-quiz-btn');
-    const nextAfterCheckBtn = document.getElementById('next-after-check-btn');
+
     const resultPopup = document.getElementById('result-popup');
     const resultAlert = document.getElementById('result-alert');
     const resultText = document.getElementById('result-text');
@@ -71,16 +92,20 @@
     const correctAnswerWrapper = document.getElementById('correct-answer-wrapper');
     const correctAnswerText = document.getElementById('correct-answer-text');
 
+    // Hàm chung để gửi đáp án
     function submitAnswer(choiceId, callback) {
         if (!choiceId) {
             if (callback) callback(null);
             return;
         }
         const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        const quizId = document.querySelector('input[name="quiz_id"]').value; // Lấy quiz_id từ form
+
         fetch("{% url 'check_answer' %}", {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
-            body: `choice_id=${choiceId}`
+            // Gửi cả choice_id và quiz_id
+            body: `choice_id=${choiceId}&quiz_id=${quizId}`
         })
         .then(response => response.json())
         .then(data => {
@@ -88,6 +113,7 @@
         });
     }
 
+    // Xử lý khi nhấn nút "Kiểm tra Đáp án"
     checkBtn.addEventListener('click', function() {
         const selectedChoice = document.querySelector('input[name="choice"]:checked');
         if (!selectedChoice) {
@@ -112,32 +138,35 @@
                 correctAnswerWrapper.style.display = 'block'; 
             }
 
+            // Vô hiệu hóa các nút sau khi kiểm tra
             document.querySelectorAll('.list-group-item-action input').forEach(input => input.disabled = true);
-            checkBtn.style.display = 'none';
-            if (skipNextBtn) skipNextBtn.style.display = 'none';
-
-            if (nextAfterCheckBtn) {
-                if (skipNextBtn) {
-                    nextAfterCheckBtn.href = skipNextBtn.href;
-                } else {
-                    nextAfterCheckBtn.innerText = 'Hoàn thành';
-                    nextAfterCheckBtn.href = finishBtn.href;
-                }
-                nextAfterCheckBtn.style.display = 'inline-block';
-            }
+            checkBtn.disabled = true;
+            checkBtn.innerText = 'Đã kiểm tra';
         });
     });
 
-    if (skipNextBtn) {
-        skipNextBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            const nextUrl = this.href;
-            const selectedChoice = document.querySelector('input[name="choice"]:checked');
-            const choiceId = selectedChoice ? selectedChoice.value : null;
+    // Hàm xử lý việc tự động lưu khi chuyển câu
+    function handleNavigation(event, nextUrl) {
+        event.preventDefault();
+        const selectedChoice = document.querySelector('input[name="choice"]:checked');
+        const choiceId = selectedChoice ? selectedChoice.value : null;
 
-            submitAnswer(choiceId, function() {
-                window.location.href = nextUrl;
-            });
+        submitAnswer(choiceId, function() {
+            window.location.href = nextUrl;
+        });
+    }
+
+    // Gán sự kiện cho nút "Câu tiếp theo"
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function(event) {
+            handleNavigation(event, this.href);
+        });
+    }
+
+    // Gán sự kiện cho nút "Câu trước"
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function(event) {
+            handleNavigation(event, this.href);
         });
     }
 </script>

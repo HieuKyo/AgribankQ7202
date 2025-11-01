@@ -5,6 +5,9 @@
     <div class="text-center mb-4">
         <h2 style="color: var(--agribank-green);">{{ exam.title }}</h2>
         <p class="lead">Vui lòng chọn một chủ đề để bắt đầu</p>
+        <a href="{% url 'question_lookup' exam_id=exam.id %}" class="btn btn-primary">
+            <i class="bi bi-search"></i> Tra cứu Câu hỏi
+        </a>
     </div>
 
     <div class="list-group">

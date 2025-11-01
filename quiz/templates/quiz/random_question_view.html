@@ -20,7 +20,15 @@
         <h1>{{ quiz_title }}</h1>
         <p class="text-muted mb-0">Câu hỏi {{ question_index|add:1 }} / {{ total_questions }}</p>
     </div>
+    <div class="d-flex justify-content-between">
+        {% if question_index > 0 %}
+            <a href="{% url 'question_view' quiz_id=quiz.id question_index=previous_index %}" class="btn btn-outline-secondary">‹ Câu trước</a>
+        {% endif %}
 
+        {% if not is_last_question %}
+            <a href="{% url 'question_view' quiz_id=quiz.id question_index=next_index %}" class="btn btn-success">Câu tiếp theo ›</a>
+        {% endif %}
+    </div>
     <div class="card-body">
         <h5 class="card-title mb-4">{{ question.text }}</h5>
         <form id="quiz-form">
@@ -36,11 +44,8 @@
             <hr>
             <div class="text-center">
                 <button type="button" id="check-answer-btn" class="btn btn-primary">Kiểm tra Đáp án</button>
-                {% if not is_last_question %}
-                    <a href="{% url 'random_question_view' question_index=next_index %}" id="skip-next-btn" class="btn btn-success">Câu tiếp theo</a>
-                {% endif %}
-                <a href="{% url 'random_quiz_result' %}" id="finish-quiz-btn" class="btn btn-danger">Kết thúc & Nộp bài</a>
-                <a href="#" id="next-after-check-btn" class="btn btn-success" style="display: none;">Câu tiếp theo</a>
+                <a href="{% url 'review_quiz' quiz_id=quiz.id %}" class="btn btn-info text-white">Xem lại bài làm</a>
+                <a href="{% url 'quiz_result' quiz_id=quiz.id %}" id="finish-quiz-btn" class="btn btn-danger">Kết thúc & Nộp bài</a>
             </div>
         </form>
     </div>
@@ -67,10 +72,12 @@
             return;
         }
         const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+
         fetch("{% url 'check_answer' %}", {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
-            body: `choice_id=${choiceId}`
+            // Gửi choice_id và một cờ (flag) báo là random
+            body: `choice_id=${choiceId}&quiz_mode=random`
         })
         .then(response => response.json())
         .then(data => {

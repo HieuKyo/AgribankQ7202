@@ -1,0 +1,61 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+
+{% block title %}Tra cứu - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Tra cứu Câu hỏi</h1>
+        <p class="lead">{{ exam.title }}</p>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'question_lookup' exam_id=exam.id %}">
+            {% csrf_token %}
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" name="query" value="{{ query }}" placeholder="Nhập từ viết tắt (tnqs...) hoặc nội dung (nghị quyết 08...)">                <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+            </div>
+        </form>
+
+        <hr>
+
+        {% if request.method == 'POST' %}
+            {% if questions %}
+                <p>Tìm thấy {{ questions|length }} kết quả cho <strong>"{{ query }}"</strong>:</p>
+                <div class="accordion" id="resultAccordion">
+                    {% for question in questions %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}">
+                                <strong>Câu {{ forloop.counter }}:</strong> {{ question.text|truncatechars:100 }}
+                            </button>
+                        </h2>
+                        <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#resultAccordion">
+                            <div class="card-body">
+                                <p><strong>Câu hỏi:</strong> {{ question.text }}</p>
+                                <hr>
+                                <p class="correct-answer">
+                                    <i class="bi bi-check-circle-fill"></i> 
+                                    <strong>Đáp án đúng:</strong>
+                                    {% for choice in question.choices.all %}
+                                        {% if choice.is_correct %}
+                                            {{ choice.text }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center text-danger">Không tìm thấy câu hỏi nào khớp với <strong>"{{ query }}"</strong>.</p>
+            {% endif %}
+        {% endif %}
+
+    </div>
+    <div class="card-footer text-center">
+        <a href="{% url 'quiz_list' exam_id=exam.id %}" class="btn btn-secondary">Quay lại danh sách chủ đề</a>
+    </div>
+</div>
+{% endblock %}
