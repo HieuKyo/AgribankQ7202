@@ -10,10 +10,20 @@
         <p class="lead">{{ exam.title }}</p>
     </div>
     <div class="card-body">
-        <form method="POST" action="{% url 'question_lookup' exam_id=exam.id %}">
+        <form method="POST" action="{% url 'question_lookup' exam_id=exam.id %}" id="lookup-form">
             {% csrf_token %}
             <div class="input-group mb-3">
-                <input type="text" class="form-control" name="query" value="{{ query }}" placeholder="Nhập từ viết tắt (tnqs...) hoặc nội dung (nghị quyết 08...)">                <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+                <input type="text" class="form-control" id="search-query-input" name="query" value="{{ query }}" placeholder="Nhập từ viết tắt (tnqs...) hoặc nội dung (nghị quyết 08...)">
+                
+                {% if query %}
+                <a href="{% url 'question_lookup' exam_id=exam.id %}" class="btn btn-outline-secondary" type="button" title="Xóa tìm kiếm">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                {% endif %}
+                
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
             </div>
         </form>
 

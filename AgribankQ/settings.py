@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import dj_database_url
 
 # --- Cài đặt Chung ---
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +44,7 @@ APP_ENV = os.environ.get('APP_ENV', 'offline')
 
 if APP_ENV == 'online':
     # Cài đặt cho Render.com
+    import dj_database_url
     DEBUG = False
     ALLOWED_HOSTS = []
     RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
