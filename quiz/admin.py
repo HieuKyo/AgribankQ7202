@@ -36,35 +36,65 @@ class QuestionAdmin(admin.ModelAdmin):
                 file = request.FILES['file']
                 try:
                     df = pd.read_excel(file, header=None)
-                    question_count = 0
+                    
+                    questions_to_create = []
+                    choices_to_create = []
+                    
+                    # Dùng dict để ánh xạ các đối tượng Question (trong bộ nhớ)
+                    # với dữ liệu lựa chọn thô của chúng
+                    temp_choice_map = {}
+
                     for index, row in df.iterrows():
                         question_text = row.get(1)
                         if pd.isna(question_text) or not question_text:
                             continue
 
-                        question = Question.objects.create(
+                        # 1. Chuẩn bị Question object trong bộ nhớ (chưa lưu)
+                        question = Question(
                             quiz=quiz,
                             text=str(question_text),
                             order=int(row.get(0, index + 1)),
                             explanation=str(row.get(7, ''))
+                            # Hàm save() tùy chỉnh sẽ tự động điền các trường search
                         )
+                        questions_to_create.append(question)
                         
+                        # 2. Lưu tạm dữ liệu choice
                         choices_text = [row.get(2), row.get(3), row.get(4), row.get(5)]
                         correct_answer_index = int(row.get(6, 0))
+                        
+                        # Lưu dữ liệu choice vào map, dùng chính đối tượng question làm key
+                        temp_choice_map[question] = (choices_text, correct_answer_index)
 
+                    # 3. Gửi 1 lệnh duy nhất để tạo TẤT CẢ câu hỏi
+                    # (Hàm save() tùy chỉnh sẽ được gọi cho từng cái)
+                    created_questions = Question.objects.bulk_create(questions_to_create)
+                    
+                    # 4. Lặp lại các câu hỏi đã tạo (giờ đã có ID)
+                    for question in created_questions:
+                        # Lấy lại dữ liệu choice đã lưu tạm
+                        choices_text, correct_index = temp_choice_map[question]
+                        
                         for i, choice_text in enumerate(choices_text, 1):
                             if pd.notna(choice_text):
-                                Choice.objects.create(
-                                    question=question,
-                                    text=str(choice_text),
-                                    is_correct=(i == correct_answer_index)
+                                # 5. Chuẩn bị Choice object trong bộ nhớ
+                                choices_to_create.append(
+                                    Choice(
+                                        question=question,
+                                        text=str(choice_text),
+                                        is_correct=(i == correct_index)
+                                    )
                                 )
-                        question_count += 1
+
+                    # 6. Gửi 1 lệnh duy nhất để tạo TẤT CẢ lựa chọn
+                    Choice.objects.bulk_create(choices_to_create)
                     
-                    self.message_user(request, f"Đã import thành công {question_count} câu hỏi vào đề thi '{quiz.title}'.", messages.SUCCESS)
+                    question_count = len(created_questions)
+                    self.message_user(request, f"Đã import TỐC ĐỘ CAO thành công {question_count} câu hỏi vào đề thi '{quiz.title}'.", messages.SUCCESS)
                     return redirect("..")
+                
                 except Exception as e:
-                    self.message_user(request, f"Đã xảy ra lỗi khi đọc file: {e}", messages.ERROR)
+                    self.message_user(request, f"Đã xảy ra lỗi khi đọc file (lỗi tối ưu): {e}", messages.ERROR)
         else:
             form = QuestionImportForm()
 
