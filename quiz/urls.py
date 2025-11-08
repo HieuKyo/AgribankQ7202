@@ -23,4 +23,5 @@ urlpatterns = [
     path('quiz/<int:quiz_id>/review/', views.review_quiz, name='review_quiz'),
     path('quiz/random/review/', views.review_random_quiz, name='review_random_quiz'),
     path('exam/<int:exam_id>/lookup/', views.question_lookup, name='question_lookup'),
+    path('about/', views.about_author, name='about_author'),
 ]

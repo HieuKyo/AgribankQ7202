@@ -15,8 +15,13 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="text-center text-muted mt-5 py-3 border-top">
-        <p>&copy; {% now "Y" %} Agribank Chi nhánh Giá Rai Bạc Liêu - AgribankQ</p>
+    <footer class="mt-5 text-center text-muted py-3">
+        <div class="container">
+            © {% now "Y" %} Agribank Chi nhánh Giá Rai Bạc Liêu - AgribankQ
+            
+            <span class="mx-2">·</span>
+            <a href="{% url 'about_author' %}">Thông tin về tác giả</a>
+        </div>
     </footer>
 
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>

@@ -1,0 +1,80 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+
+{% block title %}Về tác giả{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header text-center">
+        <h1>Về tác giả</h1>
+    </div>
+    <div class="card-body" style="min-height: 40vh;">
+        <p class="lead text-center">
+            Ứng dụng được phát triển bởi <strong>Trương Trung Hiếu - Giao dịch viên CN 7202</strong>.
+        </p>
+        <p class="text-center">
+            Cảm ơn bạn đã sử dụng ứng dụng!
+        </p>
+        
+        <hr class="my-4">
+        
+        <div class="text-center">
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#supportModal">
+                <i class="bi bi-heart-fill"></i> Ủng hộ tác giả mua database và duy trì server
+            </button>
+        </div>
+    </div>
+    <div class="card-footer text-center">
+        <a href="{% url 'main_home' %}" class="btn btn-secondary">Quay về Trang chủ</a>
+    </div>
+</div>
+
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supportModalLabel">Cảm ơn sự ủng hộ của bạn!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p id="support-message" class="lead text-success fw-bold"></p>
+                
+                <img src="{% static 'img/qr_payment.png' %}" class="img-fluid" alt="QR Code Ủng hộ">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Danh sách 10 lời chúc
+    const thankYouMessages = [
+        "Thật tuyệt vời! Chúng tôi không thể làm được điều này nếu thiếu những người ủng hộ như bạn. Cảm ơn vì đã là một phần quan trọng của cộng đồng trắc nghiệm này. Chúc bạn thật nhiều may mắn!",
+        "Xin cảm ơn bạn rất nhiều vì sự ủng hộ! Nếu bạn có bất kỳ ý tưởng hoặc đề xuất nào cho bộ trắc nghiệm tiếp theo, đừng ngần ngại chia sẻ với chúng tôi nhé. Sự đóng góp của bạn luôn được trân trọng!",
+        "Cảm ơn bạn! Bạn chính là 'ngọn hải đăng' giúp chúng tôi nhìn thấy con đường phía trước rõ ràng hơn. Chúng tôi vô cùng biết ơn sự hỗ trợ này. Chúc bạn luôn đạt điểm cao trong mọi bài kiểm tra!",
+        "Chúng tôi xin gửi lời cảm ơn sâu sắc nhất đến bạn. Sự ủng hộ này không chỉ giúp duy trì server mà còn là sự công nhận cho công sức của cả đội ngũ. Chúc bạn và gia đình luôn an lành, hạnh phúc!",
+        "Tuyệt vời! Cảm ơn sự ủng hộ hào phóng của bạn. Chúng tôi cam kết sẽ sử dụng khoản tiền này để mang đến những cải tiến vượt trội cho trải nghiệm trắc nghiệm của bạn trong thời gian tới. Hãy cùng chờ đón nhé!",
+        "Chúng tôi vừa nhận được sự ủng hộ tuyệt vời từ bạn. Cảm ơn bạn rất nhiều! Sự hỗ trợ này có ý nghĩa hơn bất cứ lời nói nào. Chúc bạn có những phút giây thú vị với các bài trắc nghiệm!",
+        "Chủ thớt/Ad/Team trắc nghiệm xin cúi đầu cảm tạ! Nhờ có bạn mà chúng tôi có thêm 'năng lượng' để chiến đấu với các lỗi kỹ thuật và ra thêm nhiều đề mới siêu hấp dẫn. Chúc bạn giải được hết mọi câu hỏi khó trong cuộc sống!",
+        "Xin chân thành cảm ơn bạn! Sự tin tưởng và hành động ủng hộ này cho thấy trang web đang đi đúng hướng. Cảm ơn bạn đã 'tiếp lửa' cho đam mê của chúng tôi. Chúc bạn luôn thành công!",
+        "Wow, thật bất ngờ và cảm động! Mỗi đóng góp như của bạn chính là một 'viên gạch' vững chắc giúp duy trì hoạt động và phát triển của trang web. Chúng tôi vô cùng trân trọng. Chúc bạn học tập/làm việc hiệu quả!",
+        "Cảm ơn bạn rất nhiều vì sự ủng hộ quý báu này! Khoản đóng góp của bạn không chỉ là tiền bạc, mà còn là nguồn động lực to lớn để chúng tôi tiếp tục nâng cấp và bổ sung các bộ trắc nghiệm chất lượng hơn nữa. Chúc bạn một ngày thật vui vẻ!"
+    ];
+
+    // Lấy các phần tử
+    const supportModal = document.getElementById('supportModal');
+    const messageElement = document.getElementById('support-message');
+
+    // Thêm sự kiện: "Khi modal SẮP ĐƯỢC MỞ"
+    supportModal.addEventListener('show.bs.modal', function (event) {
+        // 1. Chọn một lời chúc ngẫu nhiên
+        const randomIndex = Math.floor(Math.random() * thankYouMessages.length);
+        
+        // 2. Hiển thị lời chúc đó
+        messageElement.textContent = thankYouMessages[randomIndex];
+    });
+</script>
+{% endblock %}

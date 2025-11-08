@@ -381,3 +381,7 @@ def question_lookup(request, exam_id):
         'now': datetime.now()
     }
     return render(request, 'quiz/question_lookup.html', context)
+
+def about_author(request):
+    context = {'now': datetime.now()}
+    return render(request, 'quiz/about_author.html', context)
