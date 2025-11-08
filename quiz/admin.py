@@ -40,9 +40,9 @@ class QuestionAdmin(admin.ModelAdmin):
                     questions_to_create = []
                     choices_to_create = []
                     
-                    # Dùng dict để ánh xạ các đối tượng Question (trong bộ nhớ)
-                    # với dữ liệu lựa chọn thô của chúng
-                    temp_choice_map = {}
+                    # Dùng một danh sách (list) để lưu trữ tạm
+                    # dữ liệu lựa chọn theo đúng thứ tự
+                    temp_choice_data = [] 
 
                     for index, row in df.iterrows():
                         question_text = row.get(1)
@@ -55,25 +55,30 @@ class QuestionAdmin(admin.ModelAdmin):
                             text=str(question_text),
                             order=int(row.get(0, index + 1)),
                             explanation=str(row.get(7, ''))
-                            # Hàm save() tùy chỉnh sẽ tự động điền các trường search
                         )
                         questions_to_create.append(question)
                         
-                        # 2. Lưu tạm dữ liệu choice
+                        # 2. Lưu tạm dữ liệu choice vào danh sách
                         choices_text = [row.get(2), row.get(3), row.get(4), row.get(5)]
                         correct_answer_index = int(row.get(6, 0))
                         
-                        # Lưu dữ liệu choice vào map, dùng chính đối tượng question làm key
-                        temp_choice_map[question] = (choices_text, correct_answer_index)
+                        temp_choice_data.append((choices_text, correct_answer_index))
 
                     # 3. Gửi 1 lệnh duy nhất để tạo TẤT CẢ câu hỏi
                     # (Hàm save() tùy chỉnh sẽ được gọi cho từng cái)
                     created_questions = Question.objects.bulk_create(questions_to_create)
                     
                     # 4. Lặp lại các câu hỏi đã tạo (giờ đã có ID)
-                    for question in created_questions:
+                    # created_questions và temp_choice_data là 2 danh sách song song
+                    # có cùng thứ tự và cùng số lượng
+                    
+                    if len(created_questions) != len(temp_choice_data):
+                        # Lỗi logic nếu 2 danh sách không bằng nhau
+                        raise Exception("Lỗi đồng bộ: Số lượng câu hỏi tạo ra không khớp với dữ liệu lựa chọn.")
+
+                    for question, choice_data in zip(created_questions, temp_choice_data):
                         # Lấy lại dữ liệu choice đã lưu tạm
-                        choices_text, correct_index = temp_choice_map[question]
+                        choices_text, correct_index = choice_data
                         
                         for i, choice_text in enumerate(choices_text, 1):
                             if pd.notna(choice_text):
