@@ -1,7 +1,10 @@
 # quiz/admin.py
+import logging
 import pandas as pd
 from unidecode import unidecode
 from django.contrib import admin
+
+logger = logging.getLogger(__name__)
 from django.urls import path
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -109,7 +112,8 @@ class QuestionAdmin(admin.ModelAdmin):
                     return redirect("..")
 
                 except Exception as e:
-                    self.message_user(request, f"Đã xảy ra lỗi khi đọc file: {e}", messages.ERROR)
+                    logger.exception("Lỗi khi import Excel: %s", e)
+                    self.message_user(request, "Đã xảy ra lỗi khi đọc file. Vui lòng kiểm tra định dạng file và thử lại.", messages.ERROR)
         else:
             form = QuestionImportForm()
 

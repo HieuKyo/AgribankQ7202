@@ -3,7 +3,7 @@ from pathlib import Path
 
 # --- Cài đặt Chung ---
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-a-default-secret-key-for-offline')
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -11,7 +11,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic', # Thêm dòng này để hỗ trợ
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     'quiz',
 ]
@@ -43,22 +43,45 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/quiz/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
+# Giới hạn file upload 5 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+
 # --- Cài đặt Tùy theo Môi trường ---
 APP_ENV = os.environ.get('APP_ENV', 'offline')
 
 if APP_ENV == 'online':
-    # Cài đặt cho Render.com
     import dj_database_url
+
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY environment variable is required in online mode.")
+
     DEBUG = False
+
     ALLOWED_HOSTS = []
     RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    
+
     DATABASES = {'default': dj_database_url.config(conn_max_age=600, ssl_require=True)}
     STORAGES = {"staticfiles": {"BACKEND": "whitenoise.storage.StaticFilesStorage"}}
+
+    # Bảo mật HTTPS
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000        # 1 năm
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
 else:
     # Cài đặt cho Mạng nội bộ (Offline)
-    DEBUG = True # Giữ True cho offline để dễ gỡ lỗi
+    if not SECRET_KEY:
+        SECRET_KEY = 'django-offline-only-not-for-production-use'
+
+    DEBUG = True
     ALLOWED_HOSTS = ['*']
     DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}

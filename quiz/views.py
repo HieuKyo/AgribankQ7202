@@ -6,8 +6,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from unidecode import unidecode
 import random
+import logging
 
 from .models import Exam, Quiz, Question, Choice
+
+logger = logging.getLogger(__name__)
+
+SEARCH_QUERY_MAX_LENGTH = 500
 
 
 @login_required
@@ -69,6 +74,7 @@ def quiz_question(request, quiz_id, index):
 
 @require_POST
 def check_answer(request):
+    """AJAX endpoint – không yêu cầu login theo spec nhưng chỉ trả dữ liệu tối thiểu."""
     choice_id = request.POST.get('choice_id')
     quiz_id = request.POST.get('quiz_id')
 
@@ -76,27 +82,38 @@ def check_answer(request):
         return JsonResponse({})
 
     try:
-        choice = get_object_or_404(Choice, pk=int(choice_id))
-        question = choice.question
-        is_correct = choice.is_correct
+        choice_id_int = int(choice_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Yêu cầu không hợp lệ.'}, status=400)
 
-        if quiz_id:
-            session_key = f'quiz_{quiz_id}_answers'
-            answers = request.session.get(session_key, {})
-            answers[str(question.id)] = choice.id
-            request.session[session_key] = answers
+    try:
+        choice = Choice.objects.select_related('question').get(pk=choice_id_int)
+    except Choice.DoesNotExist:
+        return JsonResponse({'error': 'Không tìm thấy lựa chọn.'}, status=404)
 
-        response_data = {
-            'is_correct': is_correct,
-            'explanation': question.explanation or "Không có diễn giải.",
-        }
-        if not is_correct:
-            correct_choice = question.choices.filter(is_correct=True).first()
-            response_data['correct_answer_text'] = correct_choice.text if correct_choice else "Không xác định."
+    question = choice.question
+    is_correct = choice.is_correct
 
-        return JsonResponse(response_data)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    if quiz_id:
+        try:
+            quiz_id_int = int(quiz_id)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Yêu cầu không hợp lệ.'}, status=400)
+
+        session_key = f'quiz_{quiz_id_int}_answers'
+        answers = request.session.get(session_key, {})
+        answers[str(question.id)] = choice.id
+        request.session[session_key] = answers
+
+    response_data = {
+        'is_correct': is_correct,
+        'explanation': question.explanation or "Không có diễn giải.",
+    }
+    if not is_correct:
+        correct_choice = question.choices.filter(is_correct=True).first()
+        response_data['correct_answer_text'] = correct_choice.text if correct_choice else "Không xác định."
+
+    return JsonResponse(response_data)
 
 
 @login_required
@@ -160,7 +177,7 @@ def question_lookup(request, exam_id):
     query = ""
 
     if request.method == 'POST':
-        query = request.POST.get('query', '')
+        query = request.POST.get('query', '')[:SEARCH_QUERY_MAX_LENGTH]
         if query:
             term = unidecode(query.lower())
             questions = Question.objects.filter(
@@ -168,7 +185,7 @@ def question_lookup(request, exam_id):
             ).filter(
                 Q(search_text_normalized__icontains=term) |
                 Q(choices__search_text_normalized__icontains=term)
-            ).prefetch_related('choices').distinct()
+            ).prefetch_related('choices').distinct()[:100]
 
     return render(request, 'quiz/question_lookup.html', {
         'exam': exam,
