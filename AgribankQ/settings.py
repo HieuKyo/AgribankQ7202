@@ -63,7 +63,7 @@ if APP_ENV == 'online':
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-    DATABASES = {'default': dj_database_url.config(conn_max_age=600, ssl_require=True)}
+    DATABASES = {'default': dj_database_url.config(conn_max_age=600)}
     STORAGES = {"staticfiles": {"BACKEND": "whitenoise.storage.StaticFilesStorage"}}
 
     # Bảo mật HTTPS
