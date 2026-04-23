@@ -1,0 +1,69 @@
+{% extends 'quiz/base.html' %}
+{% block title %}Xem lại - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header text-center" style="border-top: 4px solid #AE1C3F;">
+        <h4 class="mb-0">Xem lại bài làm</h4>
+        <p class="text-muted mb-0 small">{{ quiz.title }}</p>
+    </div>
+    <div class="card-body">
+        <p class="text-center text-muted mb-3">
+            <span class="badge bg-success me-2">Xanh = Đã trả lời</span>
+            <span class="badge" style="background-color: #D69D26;">Vàng = Chưa trả lời</span>
+        </p>
+        <p class="text-center small text-muted">Nhấn vào số câu để quay lại câu đó</p>
+        <div class="d-flex flex-wrap justify-content-center gap-2 my-3">
+            {% for item in review_list %}
+            <a href="{% url 'quiz_question' quiz_id=quiz.id index=item.index %}"
+               class="btn btn-sm fw-bold"
+               style="width: 46px; height: 46px;
+                      {% if item.is_answered %}background-color: #198754; color: #fff; border: none;{% else %}background-color: #D69D26; color: #fff; border: none;{% endif %}">
+                {{ forloop.counter }}
+            </a>
+            {% empty %}
+            <p class="text-muted">Chưa có câu hỏi nào.</p>
+            {% endfor %}
+        </div>
+
+        {% with answered_count=review_list|length %}
+        <p class="text-center text-muted small">
+            Tổng: {{ review_list|length }} câu
+        </p>
+        {% endwith %}
+    </div>
+    <div class="card-footer text-center d-flex justify-content-center gap-3">
+        {% if review_list %}
+        <a href="{% url 'quiz_question' quiz_id=quiz.id index=0 %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại làm bài
+        </a>
+        {% endif %}
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmSubmitModal">
+            <i class="bi bi-flag-fill me-1"></i>Nộp bài
+        </button>
+    </div>
+</div>
+
+<!-- Modal xác nhận nộp bài -->
+<div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-labelledby="confirmSubmitLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: #AE1C3F; color: #fff;">
+                <h5 class="modal-title" id="confirmSubmitLabel">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Xác nhận nộp bài
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Bạn có chắc chắn muốn nộp bài không? Sau khi nộp bạn sẽ không thể chỉnh sửa đáp án.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tiếp tục làm bài</button>
+                <a href="{% url 'quiz_result' quiz_id=quiz.id %}" class="btn btn-danger">
+                    <i class="bi bi-check-lg me-1"></i>Xác nhận nộp
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,71 +1,94 @@
 {% extends 'quiz/base.html' %}
-{% load static %}
-
 {% block title %}Tra cứu - {{ exam.title }}{% endblock %}
 
 {% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'exam_list' %}">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quiz_list' exam_id=exam.id %}">{{ exam.title }}</a></li>
+        <li class="breadcrumb-item active">Tra cứu</li>
+    </ol>
+</nav>
+
 <div class="card">
-    <div class="card-header text-center">
-        <h1>Tra cứu Câu hỏi</h1>
-        <p class="lead">{{ exam.title }}</p>
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-search me-2"></i>Tra cứu câu hỏi</h5>
+        <small class="text-muted">{{ exam.title }}</small>
     </div>
     <div class="card-body">
-        <form method="POST" action="{% url 'question_lookup' exam_id=exam.id %}" id="lookup-form">
+        <form method="POST" action="{% url 'question_lookup' exam_id=exam.id %}">
             {% csrf_token %}
-            <div class="input-group mb-3">
-                <input type="text" class="form-control" id="search-query-input" name="query" value="{{ query }}" placeholder="Nhập từ viết tắt (tnqs...) hoặc nội dung (nghị quyết 08...)">
-                
+            <div class="input-group mb-4">
+                <input type="text" class="form-control form-control-lg" name="query" value="{{ query }}"
+                       placeholder="Nhập nội dung câu hỏi hoặc câu trả lời (có thể không dấu)..."
+                       autofocus>
                 {% if query %}
-                <a href="{% url 'question_lookup' exam_id=exam.id %}" class="btn btn-outline-secondary" type="button" title="Xóa tìm kiếm">
+                <a href="{% url 'question_lookup' exam_id=exam.id %}" class="btn btn-outline-secondary" title="Xóa">
                     <i class="bi bi-x-lg"></i>
                 </a>
                 {% endif %}
-                
                 <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-search"></i> Tìm kiếm
+                    <i class="bi bi-search me-1"></i>Tìm kiếm
                 </button>
             </div>
         </form>
 
-        <hr>
-
-        {% if request.method == 'POST' %}
+        {% if query %}
             {% if questions %}
-                <p>Tìm thấy {{ questions|length }} kết quả cho <strong>"{{ query }}"</strong>:</p>
-                <div class="accordion" id="resultAccordion">
-                    {% for question in questions %}
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="heading-{{ forloop.counter }}">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ forloop.counter }}">
-                                <strong>Câu {{ forloop.counter }}:</strong> {{ question.text|truncatechars:100 }}
-                            </button>
-                        </h2>
-                        <div id="collapse-{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#resultAccordion">
-                            <div class="card-body">
-                                <p><strong>Câu hỏi:</strong> {{ question.text }}</p>
-                                <hr>
-                                <p class="correct-answer">
-                                    <i class="bi bi-check-circle-fill"></i> 
-                                    <strong>Đáp án đúng:</strong>
-                                    {% for choice in question.choices.all %}
+            <p class="text-muted mb-3">Tìm thấy <strong>{{ questions|length }}</strong> kết quả cho "<strong>{{ query }}</strong>":</p>
+            <div class="accordion" id="lookupAccordion">
+                {% for question in questions %}
+                <div class="accordion-item mb-2 border">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed py-2" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#lookup-{{ forloop.counter }}">
+                            <span class="fw-bold me-2">{{ forloop.counter }}.</span>
+                            <span class="small">{{ question.text|truncatechars:100 }}</span>
+                        </button>
+                    </h2>
+                    <div id="lookup-{{ forloop.counter }}" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <p class="fw-bold mb-3">{{ question.text }}</p>
+                            <ul class="list-group list-group-flush">
+                                {% for choice in question.choices.all %}
+                                <li class="list-group-item d-flex align-items-start gap-2
+                                    {% if choice.is_correct %}list-group-item-success{% endif %}">
+                                    <span class="badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                          style="width:24px; height:24px; background-color:
+                                          {% if choice.is_correct %}#198754{% else %}#D69D26{% endif %}; color:#fff;">
+                                        {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% else %}D{% endif %}
+                                    </span>
+                                    <span {% if choice.is_correct %}class="fw-bold"{% endif %}>
+                                        {{ choice.text }}
                                         {% if choice.is_correct %}
-                                            {{ choice.text }}
+                                        <i class="bi bi-check-circle-fill text-success ms-1"></i>
                                         {% endif %}
-                                    {% endfor %}
-                                </p>
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% if question.explanation %}
+                            <div class="alert alert-light mt-3 mb-0 small">
+                                <strong>Giải thích:</strong> {{ question.explanation }}
                             </div>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
+            </div>
             {% else %}
-                <p class="text-center text-danger">Không tìm thấy câu hỏi nào khớp với <strong>"{{ query }}"</strong>.</p>
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-emoji-frown display-4"></i>
+                <p class="mt-3">Không tìm thấy câu hỏi nào khớp với "<strong>{{ query }}</strong>".</p>
+            </div>
             {% endif %}
         {% endif %}
-
     </div>
     <div class="card-footer text-center">
-        <a href="{% url 'quiz_list' exam_id=exam.id %}" class="btn btn-secondary">Quay lại danh sách chủ đề</a>
+        <a href="{% url 'quiz_list' exam_id=exam.id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách đề thi
+        </a>
     </div>
 </div>
 {% endblock %}

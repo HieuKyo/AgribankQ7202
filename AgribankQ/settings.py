@@ -39,6 +39,10 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/quiz/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
 # --- Cài đặt Tùy theo Môi trường ---
 APP_ENV = os.environ.get('APP_ENV', 'offline')
 
