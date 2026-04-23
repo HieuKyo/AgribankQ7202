@@ -35,6 +35,16 @@ def quiz_start(request, quiz_id):
 
 
 @login_required
+def quiz_start_all(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    question_ids = list(quiz.questions.values_list('id', flat=True))
+    random.shuffle(question_ids)
+    request.session[f'quiz_{quiz_id}_ids'] = question_ids
+    request.session[f'quiz_{quiz_id}_answers'] = {}
+    return redirect('quiz_question', quiz_id=quiz_id, index=0)
+
+
+@login_required
 def quiz_question(request, quiz_id, index):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     question_ids = request.session.get(f'quiz_{quiz_id}_ids', [])

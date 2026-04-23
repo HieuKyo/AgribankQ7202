@@ -24,9 +24,12 @@
                     <i class="bi bi-question-circle me-1"></i>{{ quiz.question_count }} câu hỏi
                 </p>
             </div>
-            <div class="card-footer bg-transparent">
+            <div class="card-footer bg-transparent d-flex flex-column gap-2">
                 <a href="{% url 'quiz_start' quiz_id=quiz.id %}" class="btn btn-primary w-100">
-                    <i class="bi bi-play-fill me-1"></i>Luyện tập
+                    <i class="bi bi-play-fill me-1"></i>Luyện tập (50 câu ngẫu nhiên)
+                </a>
+                <a href="{% url 'quiz_start_all' quiz_id=quiz.id %}" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-collection-play me-1"></i>Luyện tập toàn bộ ({{ quiz.question_count }} câu)
                 </a>
             </div>
         </div>

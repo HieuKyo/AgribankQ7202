@@ -65,14 +65,18 @@
            class="btn btn-outline-secondary">
             <i class="bi bi-grid-3x3-gap me-1"></i>Xem lại
         </a>
+        <a href="{% url 'quiz_result' quiz_id=quiz.id %}" id="submit-btn"
+           class="btn btn-danger">
+            <i class="bi bi-flag-fill me-1"></i>Nộp bài
+        </a>
         {% if not is_last %}
         <a href="{% url 'quiz_question' quiz_id=quiz.id index=index|add:1 %}" id="next-btn"
            class="btn btn-primary">
             Câu tiếp theo <i class="bi bi-chevron-right"></i>
         </a>
         {% else %}
-        <a href="{% url 'quiz_review' quiz_id=quiz.id %}" class="btn btn-danger">
-            <i class="bi bi-flag-fill me-1"></i>Kết thúc
+        <a href="{% url 'quiz_review' quiz_id=quiz.id %}" class="btn btn-primary">
+            <i class="bi bi-check2-all me-1"></i>Kết thúc
         </a>
         {% endif %}
     </div>
@@ -145,9 +149,11 @@
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
     const reviewBtn = document.getElementById('review-btn');
+    const submitBtn = document.getElementById('submit-btn');
     if (prevBtn) prevBtn.addEventListener('click', handleNavigation);
     if (nextBtn) nextBtn.addEventListener('click', handleNavigation);
     if (reviewBtn) reviewBtn.addEventListener('click', handleNavigation);
+    if (submitBtn) submitBtn.addEventListener('click', handleNavigation);
 
     choices.forEach(function (el) {
         el.addEventListener('click', function () {
