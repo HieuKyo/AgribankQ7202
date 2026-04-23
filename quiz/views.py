@@ -72,6 +72,40 @@ def quiz_question(request, quiz_id, index):
     return render(request, 'quiz/quiz_question.html', context)
 
 
+@login_required
+def quiz_question_json(request, quiz_id, index):
+    """JSON API – trả dữ liệu câu hỏi để chuyển câu không reload trang."""
+    from django.urls import reverse
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    question_ids = request.session.get(f'quiz_{quiz_id}_ids', [])
+
+    if not question_ids or index >= len(question_ids):
+        return JsonResponse({'redirect': reverse('quiz_result', kwargs={'quiz_id': quiz_id})})
+
+    question = get_object_or_404(Question, pk=question_ids[index])
+    answers = request.session.get(f'quiz_{quiz_id}_answers', {})
+    selected_choice_id = answers.get(str(question_ids[index]))
+
+    return JsonResponse({
+        'quiz_id': quiz_id,
+        'quiz_title': quiz.title,
+        'index': index,
+        'total': len(question_ids),
+        'is_last': index == len(question_ids) - 1,
+        'question': {
+            'id': question.id,
+            'text': question.text,
+            'choices': [
+                {'id': c.id, 'text': c.text}
+                for c in question.choices.all()
+            ],
+        },
+        'selected_choice_id': int(selected_choice_id) if selected_choice_id else None,
+        'review_url': reverse('quiz_review', kwargs={'quiz_id': quiz_id}),
+        'result_url': reverse('quiz_result', kwargs={'quiz_id': quiz_id}),
+    })
+
+
 @require_POST
 def check_answer(request):
     """AJAX endpoint – không yêu cầu login theo spec nhưng chỉ trả dữ liệu tối thiểu."""

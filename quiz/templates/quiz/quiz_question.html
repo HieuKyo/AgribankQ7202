@@ -1,191 +1,82 @@
 {% extends 'quiz/base.html' %}
+{% load static %}
 {% block title %}Câu {{ index|add:1 }} / {{ total }} - {{ quiz.title }}{% endblock %}
 
 {% block content %}
+{# ── Thanh tiến trình ── #}
 <div class="mb-3">
     <div class="d-flex justify-content-between align-items-center mb-1">
-        <small class="text-muted">{{ quiz.title }}</small>
-        <small class="text-muted fw-bold">{{ index|add:1 }} / {{ total }}</small>
+        <small class="text-muted fw-semibold" id="quiz-title-label">{{ quiz.title }}</small>
+        <small class="text-muted fw-bold" id="progress-label">{{ index|add:1 }} / {{ total }}</small>
     </div>
     <div class="progress" style="height: 8px;">
-        <div class="progress-bar" role="progressbar"
-             style="width: {% widthratio index|add:1 total 100 %}%; background-color: #AE1C3F;"
-             aria-valuenow="{{ index|add:1 }}" aria-valuemin="0" aria-valuemax="{{ total }}"></div>
+        <div class="progress-bar" id="progress-bar" role="progressbar"
+             style="width: {% widthratio index|add:1 total 100 %}%; background-color: #AE1C3F; transition: width 0.3s ease;">
+        </div>
     </div>
 </div>
 
-<div class="card mb-3">
+{# ── Nội dung câu hỏi ── #}
+<div class="card mb-3" id="question-card">
     <div class="card-body">
-        <p class="fw-bold fs-5 mb-4">{{ question.text }}</p>
-
+        <p class="fw-bold fs-5 mb-4" id="question-text">{{ question.text }}</p>
         <div id="choices-container">
             {% for choice in question.choices.all %}
-            {% with letter=forloop.counter %}
             <div class="choice-item d-flex align-items-start gap-3 p-3 mb-2 rounded border"
-                 style="cursor: pointer;"
                  data-choice-id="{{ choice.id }}"
                  id="choice-{{ choice.id }}">
-                <span class="badge rounded-circle d-flex align-items-center justify-content-center"
-                      style="width:28px; height:28px; min-width:28px; background-color: #D69D26; color: #fff; font-weight: bold;">
+                <span class="choice-letter badge rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                      style="width:28px;height:28px;min-width:28px;background-color:#D69D26;color:#fff;font-weight:bold;">
                     {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% else %}D{% endif %}
                 </span>
-                <span>{{ choice.text }}</span>
+                <span class="choice-text">{{ choice.text }}</span>
             </div>
-            {% endwith %}
             {% endfor %}
         </div>
-
-        <div id="explanation-box" class="alert mt-3" style="display: none;">
-            <strong id="result-label"></strong>
-            <div id="correct-answer-info" style="display: none;" class="mt-1">
-                <strong>Đáp án đúng:</strong> <span id="correct-answer-text"></span>
-            </div>
-            <hr class="my-2">
-            <strong>Giải thích:</strong> <span id="explanation-text"></span>
-        </div>
+        <div id="explanation-box" class="alert mt-3 mb-0" style="display:none;"></div>
     </div>
 </div>
 
+{# ── Điều hướng ── #}
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div>
-        {% if index > 0 %}
-        <a href="{% url 'quiz_question' quiz_id=quiz.id index=index|add:-1 %}" id="prev-btn"
-           class="btn btn-outline-secondary">
-            <i class="bi bi-chevron-left"></i> Câu trước
-        </a>
-        {% else %}
-        <button class="btn btn-outline-secondary" disabled>
+        <button id="prev-btn" class="btn btn-outline-secondary" {% if index == 0 %}disabled{% endif %}>
             <i class="bi bi-chevron-left"></i> Câu trước
         </button>
-        {% endif %}
     </div>
-
     <div class="d-flex gap-2">
-        <a href="{% url 'quiz_review' quiz_id=quiz.id %}" id="review-btn"
-           class="btn btn-outline-secondary">
+        <a href="{% url 'quiz_review' quiz_id=quiz.id %}" class="btn btn-outline-secondary">
             <i class="bi bi-grid-3x3-gap me-1"></i>Xem lại
         </a>
-        <a href="{% url 'quiz_result' quiz_id=quiz.id %}" id="submit-btn"
-           class="btn btn-danger">
+        <button id="submit-btn" class="btn btn-danger">
             <i class="bi bi-flag-fill me-1"></i>Nộp bài
-        </a>
-        {% if not is_last %}
-        <a href="{% url 'quiz_question' quiz_id=quiz.id index=index|add:1 %}" id="next-btn"
-           class="btn btn-primary">
-            Câu tiếp theo <i class="bi bi-chevron-right"></i>
-        </a>
-        {% else %}
-        <a href="{% url 'quiz_review' quiz_id=quiz.id %}" class="btn btn-primary">
-            <i class="bi bi-check2-all me-1"></i>Kết thúc
-        </a>
-        {% endif %}
+        </button>
+        <button id="next-btn" class="btn btn-primary">
+            {% if is_last %}
+                <i class="bi bi-check2-all me-1"></i>Kết thúc
+            {% else %}
+                Câu tiếp theo <i class="bi bi-chevron-right"></i>
+            {% endif %}
+        </button>
     </div>
 </div>
 
-<input type="hidden" id="quiz-id" value="{{ quiz.id }}">
-<input type="hidden" id="question-id" value="{{ question.id }}">
-<input type="hidden" id="selected-choice-id" value="{{ selected_choice_id|default:'' }}">
-<input type="hidden" id="csrf-token" value="{{ csrf_token }}">
-
+{# ── Dữ liệu khởi tạo ── #}
 <script>
-(function () {
-    const quizId = document.getElementById('quiz-id').value;
-    const questionId = document.getElementById('question-id').value;
-    const csrfToken = document.getElementById('csrf-token').value;
-    const prevSelectedId = document.getElementById('selected-choice-id').value;
-    const choices = document.querySelectorAll('.choice-item');
-    const explanationBox = document.getElementById('explanation-box');
-    const resultLabel = document.getElementById('result-label');
-    const correctAnswerInfo = document.getElementById('correct-answer-info');
-    const correctAnswerText = document.getElementById('correct-answer-text');
-    const explanationText = document.getElementById('explanation-text');
-    let answered = false;
-
-    function applyResult(choiceEl, isCorrect, explanation, correctText) {
-        choices.forEach(c => c.style.pointerEvents = 'none');
-        if (isCorrect) {
-            choiceEl.style.backgroundColor = '#d1e7dd';
-            choiceEl.style.borderColor = '#198754';
-            explanationBox.className = 'alert alert-success mt-3';
-            resultLabel.textContent = 'Đúng! ';
-            correctAnswerInfo.style.display = 'none';
-        } else {
-            choiceEl.style.backgroundColor = '#f8d7da';
-            choiceEl.style.borderColor = '#dc3545';
-            explanationBox.className = 'alert alert-danger mt-3';
-            resultLabel.textContent = 'Sai! ';
-            correctAnswerText.textContent = correctText || '';
-            correctAnswerInfo.style.display = correctText ? 'block' : 'none';
-        }
-        explanationText.textContent = explanation || 'Không có giải thích.';
-        explanationBox.style.display = 'block';
-    }
-
-    // If already answered previously, show that choice highlighted (no AJAX)
-    if (prevSelectedId) {
-        const prevEl = document.getElementById('choice-' + prevSelectedId);
-        if (prevEl) {
-            prevEl.style.backgroundColor = '#fff3cd';
-            prevEl.style.borderColor = '#D69D26';
-        }
-    }
-
-    function handleNavigation(e) {
-        e.preventDefault();
-        const href = this.getAttribute('href');
-        const selected = document.querySelector('.choice-item.selected-now');
-        if (!selected || answered) {
-            window.location.href = href;
-            return;
-        }
-        const choiceId = selected.dataset.choiceId;
-        fetch("{% url 'check_answer' %}", {
-            method: 'POST',
-            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
-            body: `choice_id=${choiceId}&quiz_id=${quizId}&question_id=${questionId}`
-        }).then(() => { window.location.href = href; });
-    }
-
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const reviewBtn = document.getElementById('review-btn');
-    const submitBtn = document.getElementById('submit-btn');
-    if (prevBtn) prevBtn.addEventListener('click', handleNavigation);
-    if (nextBtn) nextBtn.addEventListener('click', handleNavigation);
-    if (reviewBtn) reviewBtn.addEventListener('click', handleNavigation);
-    if (submitBtn) submitBtn.addEventListener('click', handleNavigation);
-
-    choices.forEach(function (el) {
-        el.addEventListener('click', function () {
-            if (answered) return;
-            answered = true;
-
-            choices.forEach(c => c.classList.remove('selected-now'));
-            el.classList.add('selected-now');
-
-            const choiceId = el.dataset.choiceId;
-            fetch("{% url 'check_answer' %}", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
-                body: `choice_id=${choiceId}&quiz_id=${quizId}&question_id=${questionId}`
-            })
-            .then(r => r.json())
-            .then(data => {
-                applyResult(el, data.is_correct, data.explanation, data.correct_answer_text);
-                if (data.is_correct) {
-                    el.style.backgroundColor = '#d1e7dd';
-                    el.style.borderColor = '#198754';
-                } else {
-                    el.style.backgroundColor = '#f8d7da';
-                    el.style.borderColor = '#dc3545';
-                    // highlight correct
-                    choices.forEach(c => {
-                        // We don't know which is correct from client side without extra info
-                    });
-                }
-            });
-        });
-    });
-})();
+const QUIZ_STATE = {
+    quizId:          {{ quiz.id }},
+    currentIndex:    {{ index }},
+    total:           {{ total }},
+    isLast:          {{ is_last|yesno:"true,false" }},
+    questionId:      {{ question.id }},
+    selectedChoiceId:{{ selected_choice_id|default:"null" }},
+    csrfToken:       '{{ csrf_token }}',
+    reviewUrl:       '{% url "quiz_review" quiz_id=quiz.id %}',
+    resultUrl:       '{% url "quiz_result" quiz_id=quiz.id %}',
+    checkAnswerUrl:  '{% url "check_answer" %}',
+    questionJsonUrl: '/quiz/quiz/{{ quiz.id }}/question/{index}/json/',
+    questionPageUrl: '/quiz/quiz/{{ quiz.id }}/question/{index}/',
+};
 </script>
+<script src="{% static 'js/quiz_question.js' %}"></script>
 {% endblock %}
